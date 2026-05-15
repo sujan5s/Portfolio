@@ -462,7 +462,7 @@ const MagicBento = ({
       </div>
       {card.image && (
         <div className="magic-bento-card__image" style={{ flex: '1 1 auto', minHeight: '150px', overflow: 'hidden', margin: '1.5em 0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <img src={card.image} alt={card.title} style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+          <img src={card.image} alt={card.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '8px' }} />
         </div>
       )}
       <div className="magic-bento-card__content">

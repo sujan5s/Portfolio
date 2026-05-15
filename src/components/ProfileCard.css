@@ -48,8 +48,8 @@
     var(--behind-glow-color) 0%,
     transparent var(--behind-glow-size)
   );
-  filter: blur(50px) saturate(1.1);
-  opacity: calc(0.8 * var(--card-opacity));
+  filter: blur(40px) saturate(1.5);
+  opacity: calc(0.9 * var(--card-opacity));
   transition: opacity 200ms ease;
 }
 
@@ -323,7 +323,8 @@
 .pc-status {
   display: block;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
+  color: #71c4ff;
+  font-weight: 600;
   line-height: 1;
 }
 
@@ -355,7 +356,6 @@
   z-index: 5;
   overflow: hidden;
   text-align: center;
-  mix-blend-mode: luminosity;
   pointer-events: none;
   transform: translate3d(
     calc(var(--pointer-from-left) * -6px + 3px),
@@ -370,7 +370,7 @@
   align-items: center;
   width: 100%;
   position: absolute;
-  top: 3em;
+  bottom: 7.5em;
   padding: 0 1em;
 }
 
@@ -379,11 +379,12 @@
   font-weight: 600;
   font-size: 2em;
   margin: 0 0 0.1em;
-  background-image: linear-gradient(to bottom, #fff, #6f6fbe);
+  background-image: linear-gradient(to bottom, #ffffff, #a8a8ff);
   background-size: 1em 1.5em;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   -webkit-background-clip: text;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .pc-details p {
@@ -392,11 +393,12 @@
   font-size: 0.9em;
   margin: 0;
   white-space: nowrap;
-  background-image: linear-gradient(to bottom, #fff, #4a4ac0);
+  background-image: linear-gradient(to bottom, #e0e0ff, #8a8aff);
   background-size: 1em 1.5em;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   -webkit-background-clip: text;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* ── Keyframes ── */
