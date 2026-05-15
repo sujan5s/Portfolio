@@ -208,75 +208,75 @@ const ParticleCard = ({
       }
     };
 
-    const handleClick = e => {
-      if (link) {
-        window.open(link, '_blank', 'noopener,noreferrer');
-      }
-
-      if (!clickEffect) return;
-
-      const rect = element.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const maxDistance = Math.max(
-        Math.hypot(x, y),
-        Math.hypot(x - rect.width, y),
-        Math.hypot(x, y - rect.height),
-        Math.hypot(x - rect.width, y - rect.height)
-      );
-
-      const ripple = document.createElement('div');
-      ripple.style.cssText = `
-        position: absolute;
-        width: ${maxDistance * 2}px;
-        height: ${maxDistance * 2}px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(${glowColor}, 0.4) 0%, rgba(${glowColor}, 0.2) 30%, transparent 70%);
-        left: ${x - maxDistance}px;
-        top: ${y - maxDistance}px;
-        pointer-events: none;
-        z-index: 1000;
-      `;
-
-      element.appendChild(ripple);
-
-      gsap.fromTo(
-        ripple,
-        {
-          scale: 0,
-          opacity: 1
-        },
-        {
-          scale: 1,
-          opacity: 0,
-          duration: 0.8,
-          ease: 'power2.out',
-          onComplete: () => ripple.remove()
-        }
-      );
-    };
-
     element.addEventListener('mouseenter', handleMouseEnter);
     element.addEventListener('mouseleave', handleMouseLeave);
     element.addEventListener('mousemove', handleMouseMove);
-    element.addEventListener('click', handleClick);
 
     return () => {
       isHoveredRef.current = false;
       element.removeEventListener('mouseenter', handleMouseEnter);
       element.removeEventListener('mouseleave', handleMouseLeave);
       element.removeEventListener('mousemove', handleMouseMove);
-      element.removeEventListener('click', handleClick);
       clearAllParticles();
     };
   }, [animateParticles, clearAllParticles, disableAnimations, enableTilt, enableMagnetism, clickEffect, glowColor]);
+
+  const handleClick = (e) => {
+    if (link) {
+      window.open(link, '_blank', 'noopener,noreferrer');
+    }
+
+    if (!clickEffect || !cardRef.current) return;
+
+    const element = cardRef.current;
+    const rect = element.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const maxDistance = Math.max(
+      Math.hypot(x, y),
+      Math.hypot(x - rect.width, y),
+      Math.hypot(x, y - rect.height),
+      Math.hypot(x - rect.width, y - rect.height)
+    );
+
+    const ripple = document.createElement('div');
+    ripple.style.cssText = `
+      position: absolute;
+      width: ${maxDistance * 2}px;
+      height: ${maxDistance * 2}px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(${glowColor}, 0.4) 0%, rgba(${glowColor}, 0.2) 30%, transparent 70%);
+      left: ${x - maxDistance}px;
+      top: ${y - maxDistance}px;
+      pointer-events: none;
+      z-index: 1000;
+    `;
+
+    element.appendChild(ripple);
+
+    gsap.fromTo(
+      ripple,
+      {
+        scale: 0,
+        opacity: 1
+      },
+      {
+        scale: 1,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power2.out',
+        onComplete: () => ripple.remove()
+      }
+    );
+  };
 
   return (
     <div
       ref={cardRef}
       className={`${className} particle-container`}
       style={{ ...style, position: 'relative', overflow: 'hidden' }}
+      onClick={handleClick}
     >
       {children}
     </div>
@@ -452,7 +452,8 @@ const MagicBento = ({
 }) => {
   const gridRef = useRef(null);
   const isMobile = useMobileDetection();
-  const shouldDisableAnimations = disableAnimations || isMobile;
+  // Enable animations on mobile too unless explicitly disabled
+  const shouldDisableAnimations = disableAnimations;
 
   const renderCardContent = (card) => (
     <>
