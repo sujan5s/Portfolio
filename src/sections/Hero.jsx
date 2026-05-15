@@ -1,7 +1,7 @@
-import React, { use } from 'react'
+import React from 'react'
 import { words } from '../constants/index.js'
 import Button from '../components/Button.jsx'
-import HeroExperience from '../components/Heromodels/HeroExperience.jsx'
+import ProfileCard from '../components/ProfileCard.jsx'
 import { useGSAP} from '@gsap/react'
 import { gsap } from 'gsap'
 import AnimatedCounter from '../components/AnimatedCounter.jsx'
@@ -19,9 +19,9 @@ const Hero = () => {
         <img src="/images/bg.png" alt="" />
       </div>
 
-      <div className="hero-layout">
+      <div className="relative z-10 flex flex-col xl:flex-row items-center justify-between w-full min-h-screen px-5 xl:px-20 pt-32 xl:pt-20 pb-20">
         
-        <header className="flex flex-col justify-center md:w-full w-screen md:px-20 px-5">
+        <header className="flex flex-col justify-center xl:w-1/2 w-full z-30">
           <div className="flex flex-col gap-7">
             <div className="hero-text">
               <h1>
@@ -59,9 +59,30 @@ const Hero = () => {
             />
           </div>
         </header>
-        <figure>
-          <div className="hero-3d-layout">
-            <HeroExperience />
+
+        <figure className="relative z-20 flex justify-center items-center xl:w-1/2 w-full mt-20 xl:mt-0 perspective-1000">
+          <div className="flex justify-center items-center w-full h-full scale-90 xl:scale-100">
+            <ProfileCard
+              name="Sujan"
+              title="Software Developer"
+              handle="sujans"
+              status="Online"
+              contactText="Contact Me"
+              avatarUrl="/images/sujans05.png"
+              iconUrl="/images/iconpattern.png"
+              showUserInfo={true}
+              enableTilt={true}
+              enableMobileTilt={false}
+              onContactClick={() => {
+                const contactSection = document.getElementById('contact');
+                if (contactSection) {
+                  contactSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              behindGlowColor="rgba(132, 0, 255, 0.4)"
+              behindGlowEnabled={true}
+              innerGradient="linear-gradient(145deg, #1a0f2e 0%, #0f1525 100%)"
+            />
           </div>
         </figure>
       </div>
