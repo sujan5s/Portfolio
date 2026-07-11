@@ -276,6 +276,8 @@ section {
 
   .tech-icon-wrapper {
     @apply flex justify-center items-center w-52 h-60 relative;
+    /* Let a drag on the icon rotate the 3D model instead of scrolling the page */
+    touch-action: none;
   }
 
   form {

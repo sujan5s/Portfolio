@@ -678,8 +678,20 @@ function SplashCursor({
     let lastUpdateTime = Date.now();
     let colorUpdateTimer = 0.0;
 
+    // Pause the simulation when the pointer has been idle long enough for the
+    // dye to fully dissipate, and while the tab is hidden. Any pointer event
+    // wakes it back up. This keeps the GPU idle instead of running ~30 shader
+    // passes per frame forever.
+    const IDLE_TIMEOUT_MS = 3500;
+    let isRunning = false;
+    let lastInteraction = Date.now();
+
     function updateFrame() {
       if (!isActive) return;
+      if (document.hidden || Date.now() - lastInteraction > IDLE_TIMEOUT_MS) {
+        isRunning = false;
+        return;
+      }
       const dt = calcDeltaTime();
       if (resizeCanvas()) initFramebuffers();
       updateColors(dt);
@@ -687,6 +699,15 @@ function SplashCursor({
       step(dt);
       render(null);
       animationFrameId.current = requestAnimationFrame(updateFrame);
+    }
+
+    function wake() {
+      lastInteraction = Date.now();
+      if (!isRunning && isActive && !document.hidden) {
+        isRunning = true;
+        lastUpdateTime = Date.now();
+        animationFrameId.current = requestAnimationFrame(updateFrame);
+      }
     }
 
     function calcDeltaTime() {
@@ -980,6 +1001,7 @@ function SplashCursor({
 
     // Named event handlers for proper cleanup
     function handleMouseDown(e) {
+      wake();
       let pointer = pointers[0];
       let posX = scaleByPixelRatio(e.clientX);
       let posY = scaleByPixelRatio(e.clientY);
@@ -989,6 +1011,7 @@ function SplashCursor({
 
     let firstMouseMoveHandled = false;
     function handleMouseMove(e) {
+      wake();
       let pointer = pointers[0];
       let posX = scaleByPixelRatio(e.clientX);
       let posY = scaleByPixelRatio(e.clientY);
@@ -1002,6 +1025,7 @@ function SplashCursor({
     }
 
     function handleTouchStart(e) {
+      wake();
       const touches = e.targetTouches;
       let pointer = pointers[0];
       for (let i = 0; i < touches.length; i++) {
@@ -1012,6 +1036,7 @@ function SplashCursor({
     }
 
     function handleTouchMove(e) {
+      wake();
       const touches = e.targetTouches;
       let pointer = pointers[0];
       for (let i = 0; i < touches.length; i++) {
@@ -1036,7 +1061,12 @@ function SplashCursor({
     window.addEventListener('touchmove', handleTouchMove, false);
     window.addEventListener('touchend', handleTouchEnd);
 
-    updateFrame();
+    function handleVisibilityChange() {
+      if (!document.hidden) wake();
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    wake();
 
     // Cleanup function
     return () => {
@@ -1054,6 +1084,7 @@ function SplashCursor({
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -1,60 +1,98 @@
-import { Environment, Float, OrbitControls, useGLTF } from "@react-three/drei";
+import { Environment, Float, PerspectiveCamera, useGLTF, View } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
+
+// The single shared WebGL canvas that draws every tech icon <View>. It sits as
+// a transparent, click-through overlay across the whole tech grid. One context
+// serves all five icons — five separate contexts is what crashed mobile tabs.
+export const TechIconsCanvas = ({ eventSource, frameloop, isMobile }) => (
+  <Canvas
+    eventSource={eventSource}
+    frameloop={frameloop}
+    // Cap pixel ratio hard on phones — this is the main scroll-jank lever
+    dpr={isMobile ? 1 : [1, 1.5]}
+    gl={{ antialias: !isMobile, powerPreference: "low-power", alpha: true }}
+    style={{
+      position: "absolute",
+      inset: 0,
+      width: "100%",
+      height: "100%",
+      zIndex: 20,
+      pointerEvents: "none",
+    }}
+  >
+    <View.Port />
+  </Canvas>
+);
 
 const TechIconCardExperience = ({ model }) => {
   const scene = useGLTF(model.modelPath);
+  const groupRef = useRef(null);
+  const dragCleanup = useRef(null);
 
   useEffect(() => {
     if (model.name === "Interactive Developer") {
       scene.scene.traverse((child) => {
-        if (child.isMesh) {
-          if (child.name === "Object_5") {
-            child.material = new THREE.MeshStandardMaterial({ color: "white" });
-          }
+        if (child.isMesh && child.name === "Object_5") {
+          child.material = new THREE.MeshStandardMaterial({ color: "white" });
         }
       });
     }
   }, [scene]);
 
+  // Manual drag-to-rotate. Because it starts from an R3F pointer event on THIS
+  // model's mesh, only the icon actually under the finger rotates (unlike
+  // OrbitControls, which would grab every model from one shared canvas). Works
+  // for both mouse and touch.
+  const handlePointerDown = (e) => {
+    e.stopPropagation();
+    let lastX = e.clientX;
+    let lastY = e.clientY;
+
+    const onMove = (ev) => {
+      if (!groupRef.current) return;
+      groupRef.current.rotation.y += (ev.clientX - lastX) * 0.01;
+      groupRef.current.rotation.x += (ev.clientY - lastY) * 0.01;
+      lastX = ev.clientX;
+      lastY = ev.clientY;
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      dragCleanup.current = null;
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    dragCleanup.current = onUp;
+  };
+
+  // Drop any in-flight drag listeners if the icon unmounts mid-drag
+  useEffect(() => () => dragCleanup.current?.(), []);
+
   return (
-    <Canvas>
-      <ambientLight intensity={0.3} />
-      <directionalLight position={[5, 5, 5]} intensity={1} />
-      <spotLight
-        position={[10, 15, 10]}
-        angle={0.3}
-        penumbra={1}
-        intensity={2}
-      />
+    <View className="w-full h-full">
+      {/* Match the R3F default camera the old per-icon Canvas used so the
+          model scales in the constants still look right */}
+      <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={75} />
+
+      <ambientLight intensity={0.4} />
+      <directionalLight position={[5, 5, 5]} intensity={1.2} />
+      <spotLight position={[10, 15, 10]} angle={0.3} penumbra={1} intensity={2} />
       <Environment preset="city" />
 
-      {/* 
-        The Float component from @react-three/drei is used to 
-        create a simple animation of the model floating in space.
-        The rotationIntensity and floatIntensity props control the
-        speed of the rotation and float animations respectively.
-
-        The group component is used to scale and rotate the model.
-        The rotation is set to the value of the model.rotation property,
-        which is an array of three values representing the rotation in
-        degrees around the x, y and z axes respectively.
-
-        The primitive component is used to render the 3D model.
-        The object prop is set to the scene object returned by the
-        useGLTF hook, which is an instance of THREE.Group. The
-        THREE.Group object contains all the objects (meshes, lights, etc)
-        that make up the 3D model.
-      */}
-      <Float speed={5.5} rotationIntensity={0.5} floatIntensity={0.9}>
-        <group scale={model.scale} rotation={model.rotation}>
+      <Float speed={4} rotationIntensity={0.4} floatIntensity={0.8}>
+        <group
+          ref={groupRef}
+          scale={model.scale}
+          rotation={model.rotation}
+          onPointerDown={handlePointerDown}
+        >
           <primitive object={scene.scene} />
         </group>
       </Float>
-
-      <OrbitControls enableZoom={false} />
-    </Canvas>
+    </View>
   );
 };
 

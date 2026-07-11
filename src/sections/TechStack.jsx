@@ -1,36 +1,46 @@
-import React, { Suspense } from "react";
+import React, { Suspense, lazy } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { useMediaQuery } from "react-responsive";
 
 import TitleHeader from "../components/TitleHeader";
-import TechIconCardExperience from "../components/models/tech_logos/TechIconCardExperience";
 import { techStackIcons } from "../constants";
-// import { techStackImgs } from "../constants";
+import useInViewFrameloop from "../hooks/useInViewFrameloop";
+
+// Lazy so the Three.js chunk for this section is only downloaded when the
+// section actually renders. All 3D icons share ONE WebGL context via drei's
+// <View> — five separate contexts is what crashed mobile browsers.
+const TechIconCardExperience = lazy(() =>
+  import("../components/models/tech_logos/TechIconCardExperience")
+);
+const TechIconsCanvas = lazy(() =>
+  import("../components/models/tech_logos/TechIconCardExperience").then((m) => ({
+    default: m.TechIconsCanvas,
+  }))
+);
 
 const TechStack = () => {
+  const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
+  // Pauses the shared canvas entirely while the section is scrolled offscreen
+  const [containerRef, frameloop] = useInViewFrameloop();
+
   // Animate the tech cards in the skills section
   useGSAP(() => {
-    // This animation is triggered when the user scrolls to the #skills wrapper
-    // The animation starts when the top of the wrapper is at the center of the screen
-    // The animation is staggered, meaning each card will animate in sequence
-    // The animation ease is set to "power2.inOut", which is a slow-in fast-out ease
     gsap.fromTo(
       ".tech-card",
       {
-        // Initial values
-        y: 50, // Move the cards down by 50px
-        opacity: 0, // Set the opacity to 0
+        y: 50,
+        opacity: 0,
       },
       {
-        // Final values
-        y: 0, // Move the cards back to the top
-        opacity: 1, // Set the opacity to 1
-        duration: 1, // Duration of the animation
-        ease: "power2.inOut", // Ease of the animation
-        stagger: 0.2, // Stagger the animation by 0.2 seconds
+        y: 0,
+        opacity: 1,
+        duration: 1,
+        ease: "power2.inOut",
+        stagger: 0.2,
         scrollTrigger: {
-          trigger: "#skills", // Trigger the animation when the user scrolls to the #skills wrapper
-          start: "top center", // Start the animation when the top of the wrapper is at the center of the screen
+          trigger: "#skills",
+          start: "top center",
         },
       }
     );
@@ -43,54 +53,37 @@ const TechStack = () => {
           title="How I Can Contribute & My Key Skills"
           sub="🤝 What I Bring to the Table"
         />
-        <div className="tech-grid">
-          {/* Loop through the techStackIcons array and create a component for each item. 
-              The key is set to the name of the tech stack icon, and the classnames are set to 
-              card-border, tech-card, overflow-hidden, and group. The xl:rounded-full and rounded-lg 
-              classes are only applied on larger screens. */}
-          {techStackIcons.map((techStackIcon) => (
-            <div
-              key={techStackIcon.name}
-              className="card-border tech-card overflow-hidden group xl:rounded-full rounded-lg"
-            >
-              {/* The tech-card-animated-bg div is used to create a background animation when the 
-                  component is hovered. */}
-              <div className="tech-card-animated-bg" />
-              <div className="tech-card-content">
-                {/* The tech-icon-wrapper div contains the TechIconCardExperience component, 
-                    which renders the 3D model of the tech stack icon. */}
-                <div className="tech-icon-wrapper">
-                  <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-xs opacity-50">...</div>}>
-                    <TechIconCardExperience model={techStackIcon} />
-                  </Suspense>
-                </div>
-                {/* The padding-x and w-full classes are used to add horizontal padding to the 
-                    text and make it take up the full width of the component. */}
-                <div className="padding-x w-full">
-                  {/* The p tag contains the name of the tech stack icon. */}
-                  <p>{techStackIcon.name}</p>
+        {/* relative wrapper so the shared canvas overlay covers the grid */}
+        <div ref={containerRef} className="relative">
+          <div className="tech-grid">
+            {techStackIcons.map((techStackIcon) => (
+              <div
+                key={techStackIcon.name}
+                className="card-border tech-card overflow-hidden group xl:rounded-full rounded-lg"
+              >
+                <div className="tech-card-animated-bg" />
+                <div className="tech-card-content">
+                  <div className="tech-icon-wrapper">
+                    <Suspense fallback={<div className="w-full h-full flex items-center justify-center text-xs opacity-50">...</div>}>
+                      <TechIconCardExperience model={techStackIcon} />
+                    </Suspense>
+                  </div>
+                  <div className="padding-x w-full">
+                    <p>{techStackIcon.name}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
 
-          {/* This is for the img part */}
-          {/* {techStackImgs.map((techStackIcon, index) => (
-            <div
-              key={index}
-              className="card-border tech-card overflow-hidden group xl:rounded-full rounded-lg"
-            >
-              <div className="tech-card-animated-bg" />
-              <div className="tech-card-content">
-                <div className="tech-icon-wrapper">
-                  <img src={techStackIcon.imgPath} alt="" />
-                </div>
-                <div className="padding-x w-full">
-                  <p>{techStackIcon.name}</p>
-                </div>
-              </div>
-            </div>
-          ))} */}
+          {/* One WebGL context renders every icon above via <View.Port /> */}
+          <Suspense fallback={null}>
+            <TechIconsCanvas
+              eventSource={containerRef}
+              frameloop={frameloop}
+              isMobile={isMobile}
+            />
+          </Suspense>
         </div>
       </div>
     </div>

@@ -19,7 +19,9 @@ const Contact = lazy(() => import('./sections/Contact'))
 const Footer = lazy(() => import('./sections/Footer'))
 
 const App = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  // Initialize synchronously so the fluid cursor never mounts on mobile,
+  // not even for one render
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   
   // Check session storage so loader only shows once per session
   const hasSeenLoader = sessionStorage.getItem('portfolio_has_seen_loader') === 'true';
@@ -72,24 +74,27 @@ const App = () => {
       <div className={`app-content ${showLoader ? 'hidden opacity-0 pointer-events-none fixed inset-0' : 'visible opacity-100 transition-opacity duration-1000'}`}>
         <Navbar />
         
-        {/* Priority: Splash Effect */}
-        <Suspense fallback={null}>
-          <SplashCursor
-            SIM_RESOLUTION={isMobile ? 64 : 128}
-            DYE_RESOLUTION={isMobile ? 512 : 1440}
-            PRESSURE_ITERATIONS={isMobile ? 10 : 20}
-            DENSITY_DISSIPATION={isMobile ? 4.5 : 3.5}
-            VELOCITY_DISSIPATION={isMobile ? 3 : 2}
-            PRESSURE={0.1}
-            CURL={isMobile ? 2 : 3}
-            SPLAT_RADIUS={isMobile ? 0.15 : 0.2}
-            SPLAT_FORCE={isMobile ? 4000 : 6000}
-            COLOR_UPDATE_SPEED={10}
-            SHADING={!isMobile}
-            RAINBOW_MODE={false}
-            COLOR="#A855F7"
-          />
-        </Suspense>
+        {/* Priority: Splash Effect — desktop only. A cursor effect is useless on
+            touch screens and the fluid sim is the single biggest GPU cost on phones. */}
+        {!isMobile && (
+          <Suspense fallback={null}>
+            <SplashCursor
+              SIM_RESOLUTION={128}
+              DYE_RESOLUTION={1440}
+              PRESSURE_ITERATIONS={20}
+              DENSITY_DISSIPATION={3.5}
+              VELOCITY_DISSIPATION={2}
+              PRESSURE={0.1}
+              CURL={3}
+              SPLAT_RADIUS={0.2}
+              SPLAT_FORCE={6000}
+              COLOR_UPDATE_SPEED={10}
+              SHADING={true}
+              RAINBOW_MODE={false}
+              COLOR="#A855F7"
+            />
+          </Suspense>
+        )}
 
         <main>
           {/* Priority Sections */}

@@ -68,7 +68,7 @@ const Hero = () => {
               handle="sujans"
               status="Online"
               contactText="Contact Me"
-              avatarUrl="/images/sujans05.png"
+              avatarUrl="/images/sujans05.webp"
               iconUrl="/images/iconpattern.png"
               showUserInfo={true}
               enableTilt={true}

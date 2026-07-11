@@ -12,7 +12,7 @@ const projects = [
     title: 'Smart Finance Tracker',
     description: 'A Smart Platform to Track your expenses and manage your income and expenses .',
     label: 'Smart Finance Tracker',
-    image: '/images/finance.png',
+    image: '/images/finance.webp',
     link: 'https://finance-tracker-x6mi.vercel.app/dashboard'
   },
   {
@@ -20,7 +20,7 @@ const projects = [
     title: 'AeroClub Nitte Website',
     description: 'The official website showcasing projects and events for AeroClub Nitte.',
     label: 'AeroClub',
-    image: '/images/project33.png',
+    image: '/images/project33.webp',
     link: 'https://www.aeroclubnitte-nmamit.com'
   },
   {
@@ -28,7 +28,7 @@ const projects = [
     title: 'Incridea',
     description: 'A technocultural fest website for NMAMIT. Built with React, Node.js, & TailwindCSS.',
     label: 'Incridea',
-    image: '/images/incridea.png',
+    image: '/images/incridea.webp',
     link: 'https://incridea.in/'
   },
  {
@@ -36,7 +36,7 @@ const projects = [
     title: 'Shara Ayurveda',
     description: 'A ecommerce website to sell ayurvedic products (Freelancing project).',
     label: 'Shara Ayurveda',
-    image: '/images/shara.png',
+    image: '/images/shara.webp',
     link: 'https://ayurvedic-client.vercel.app/'
   },
   {
@@ -44,7 +44,7 @@ const projects = [
     title: 'Shara Dashboard',
     description: 'A Dashboard for Shara Ayurveda (Freelancing project).',
     label: 'Shara Dashboard',
-    image: '/images/sharad.png',
+    image: '/images/sharad.webp',
     link: 'https://ayurvedic-dashboard.vercel.app/'
   },
   {
@@ -52,7 +52,7 @@ const projects = [
     title: 'Stock market pridiction',
     description: 'Stock market pridiction using Machine Learning.',
     label: 'Stock market pridiction',
-    image: '/images/stock.png',
+    image: '/images/stock.webp',
     link: ''
   },
 ];

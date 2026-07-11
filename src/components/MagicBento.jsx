@@ -452,8 +452,10 @@ const MagicBento = ({
 }) => {
   const gridRef = useRef(null);
   const isMobile = useMobileDetection();
-  // Enable animations on mobile too unless explicitly disabled
-  const shouldDisableAnimations = disableAnimations;
+  // Hover effects don't exist on touch screens, but taps still fire mouseenter
+  // and spawn infinite particle tweens that never get cleaned up (mouseleave
+  // never fires) — so always disable them on mobile.
+  const shouldDisableAnimations = disableAnimations || isMobile;
 
   const renderCardContent = (card) => (
     <>
