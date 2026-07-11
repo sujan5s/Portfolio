@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { words } from '../constants/index.js'
 import Button from '../components/Button.jsx'
-import ProfileCard from '../components/ProfileCard.jsx'
 import { useGSAP} from '@gsap/react'
 import { gsap } from 'gsap'
 import AnimatedCounter from '../components/AnimatedCounter.jsx'
+
+const DepthPortrait = lazy(() => import('../components/Heromodels/DepthPortrait.jsx'))
 
 const Hero = () => {
   useGSAP(() => {
@@ -62,27 +63,27 @@ const Hero = () => {
 
         <figure className="relative z-20 flex justify-center items-center xl:w-1/2 w-full mt-20 xl:mt-0 perspective-1000">
           <div className="flex justify-center items-center w-full h-full scale-90 xl:scale-100">
-            <ProfileCard
-              name="Sujan"
-              title="Software Developer"
-              handle="sujans"
-              status="Online"
-              contactText="Contact Me"
-              avatarUrl="/images/sujans05.webp"
-              iconUrl="/images/iconpattern.png"
-              showUserInfo={true}
-              enableTilt={true}
-              enableMobileTilt={false}
-              onContactClick={() => {
-                const contactSection = document.getElementById('contact');
-                if (contactSection) {
-                  contactSection.scrollIntoView({ behavior: 'smooth' });
+            <div className="relative w-[min(80vw,26rem)] aspect-[2/3]">
+              <div
+                className="absolute -inset-8 blur-3xl pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(ellipse at center, rgba(132, 0, 255, 0.4), transparent 70%)',
+                }}
+              />
+              <Suspense
+                fallback={
+                  <img
+                    src="/images/sujans05.webp"
+                    alt="Sujan"
+                    className="relative w-full h-full object-contain"
+                    draggable={false}
+                  />
                 }
-              }}
-              behindGlowColor="rgba(132, 0, 255, 0.4)"
-              behindGlowEnabled={true}
-              innerGradient="linear-gradient(145deg, #1a0f2e 0%, #0f1525 100%)"
-            />
+              >
+                <DepthPortrait />
+              </Suspense>
+            </div>
           </div>
         </figure>
       </div>
