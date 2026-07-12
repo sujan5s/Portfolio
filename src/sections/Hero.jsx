@@ -68,7 +68,7 @@ const Hero = () => {
                 className="absolute -inset-8 blur-3xl pointer-events-none"
                 style={{
                   background:
-                    'radial-gradient(ellipse at center, rgba(132, 0, 255, 0.4), transparent 70%)',
+                    'radial-gradient(ellipse at center, rgba(0, 180, 255, 0.35), rgba(132, 0, 255, 0.18), transparent 70%)',
                 }}
               />
               <Suspense
