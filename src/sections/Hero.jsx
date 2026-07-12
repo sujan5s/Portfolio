@@ -1,23 +1,52 @@
-import React, { lazy, Suspense } from 'react'
+import React, { lazy, Suspense, useRef } from 'react'
 import { words } from '../constants/index.js'
 import Button from '../components/Button.jsx'
 import { useGSAP} from '@gsap/react'
 import { gsap } from 'gsap'
 import AnimatedCounter from '../components/AnimatedCounter.jsx'
+import useParallax from '../hooks/useParallax.js'
 
 const DepthPortrait = lazy(() => import('../components/Heromodels/DepthPortrait.jsx'))
 
 const Hero = () => {
+  const bgWrapperRef = useRef(null)
+  const bgImgRef = useRef(null)
+
+  // Scroll parallax on the decorative background layer only — the
+  // DepthPortrait hologram is untouched and keeps its own pointer-parallax.
+  useParallax(bgWrapperRef, { y: 160, trigger: '#hero', start: 'top top', end: 'bottom top' })
+
   useGSAP(() => {
     gsap.fromTo('.hero-text h1',
       { y: 50, opacity: 0 },
       { y: 0, opacity: 1, duration: 1, stagger: 0.2, ease: 'power2.out' })
+
+    // Light mouse-parallax on the same background layer, layered on top of
+    // its scroll parallax, for extra depth on desktop.
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion || window.innerWidth <= 768) return
+
+    const img = bgImgRef.current
+    if (!img) return
+
+    const xTo = gsap.quickTo(img, 'x', { duration: 0.8, ease: 'power3.out' })
+    const yTo = gsap.quickTo(img, 'y', { duration: 0.8, ease: 'power3.out' })
+
+    const handlePointerMove = (e) => {
+      const relX = e.clientX / window.innerWidth - 0.5
+      const relY = e.clientY / window.innerHeight - 0.5
+      xTo(relX * -40)
+      yTo(relY * -40)
+    }
+
+    window.addEventListener('pointermove', handlePointerMove)
+    return () => window.removeEventListener('pointermove', handlePointerMove)
   })
 
   return (
     <section id="hero" className="relative overflow-hidden">
-      <div className="absolute top-0 left-0 z-10">
-        <img src="/images/bg.png" alt="" />
+      <div ref={bgWrapperRef} className="absolute top-0 left-0 z-10">
+        <img ref={bgImgRef} src="/images/bg.png" alt="" />
       </div>
 
       <div className="relative z-10 flex flex-col xl:flex-row items-center justify-between w-full min-h-screen px-5 xl:px-20 pt-32 xl:pt-20 pb-20">

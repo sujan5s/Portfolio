@@ -10,9 +10,9 @@ export const TechIconsCanvas = ({ eventSource, frameloop, isMobile }) => (
   <Canvas
     eventSource={eventSource}
     frameloop={frameloop}
-    // Cap pixel ratio hard on phones — this is the main scroll-jank lever
-    dpr={isMobile ? 1 : [1, 1.5]}
-    gl={{ antialias: !isMobile, powerPreference: "low-power", alpha: true }}
+    // Cap pixel ratio hard — this is the main scroll-jank lever
+    dpr={isMobile ? 1 : [1, 1.25]}
+    gl={{ antialias: false, powerPreference: "low-power", alpha: true }}
     style={{
       position: "absolute",
       inset: 0,
@@ -80,7 +80,11 @@ const TechIconCardExperience = ({ model }) => {
       <ambientLight intensity={0.4} />
       <directionalLight position={[5, 5, 5]} intensity={1.2} />
       <spotLight position={[10, 15, 10]} angle={0.3} penumbra={1} intensity={2} />
-      <Environment preset="city" />
+      {/* Low resolution: a full-res city HDRI re-rendered per icon per frame
+          across 5 shared views was expensive enough to drop frames during
+          scroll, which reads as the icons jumping/glitching relative to the
+          (compositor-smooth) page scroll. */}
+      <Environment preset="city" resolution={16} />
 
       <Float speed={4} rotationIntensity={0.4} floatIntensity={0.8}>
         <group

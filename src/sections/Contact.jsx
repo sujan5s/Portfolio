@@ -1,17 +1,38 @@
 import { useRef, useState } from "react";
 import emailjs from "@emailjs/browser";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import TitleHeader from "../components/TitleHeader";
 import ContactExperience from "../components/models/contact/ContactExperience";
+import { SCROLL_TRIGGER_START } from "../constants/motion.js";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const Contact = () => {
   const formRef = useRef(null);
+  const sectionRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
     message: "",
   });
+
+  useGSAP(() => {
+    gsap.from([".contact-form-card", ".contact-model-box"], {
+      y: 40,
+      opacity: 0,
+      duration: 1,
+      ease: "power2.out",
+      stagger: 0.2,
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: SCROLL_TRIGGER_START,
+      },
+    });
+  }, { scope: sectionRef });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -40,7 +61,7 @@ const Contact = () => {
   };
 
   return (
-    <section id="contact" className="flex-center section-padding">
+    <section id="contact" ref={sectionRef} className="flex-center section-padding">
       <div className="w-full h-full md:px-10 px-5">
         <TitleHeader
           title="Get in Touch – Let’s Connect"
@@ -48,7 +69,7 @@ const Contact = () => {
         />
         <div className="grid-12-cols mt-16">
           <div className="xl:col-span-5">
-            <div className="flex-center card-border rounded-xl p-10">
+            <div className="contact-form-card flex-center card-border rounded-xl p-10">
               <form
                 ref={formRef}
                 onSubmit={handleSubmit}
@@ -108,7 +129,7 @@ const Contact = () => {
             </div>
           </div>
           <div className="xl:col-span-7 min-h-96">
-            <div className="bg-[#cd7c2e] w-full h-full hover:cursor-grab rounded-3xl overflow-hidden">
+            <div className="contact-model-box bg-[#cd7c2e] w-full h-full hover:cursor-grab rounded-3xl overflow-hidden">
               <ContactExperience />
             </div>
           </div>

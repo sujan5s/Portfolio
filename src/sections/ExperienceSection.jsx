@@ -53,9 +53,31 @@ const ExperienceSection = () => {
                 start:'top 60%',
                 }
             })
-            
+
         })
-        
+
+        // Subtle parallax on the GlowCard column — a separate `y` scrub
+        // layered on top of the existing xPercent slide-in above, so the
+        // card reads at a slightly different depth than the timeline text
+        // beside it. Timeline scaleY scrub and the card slide-in are
+        // untouched.
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!prefersReducedMotion) {
+            const distance = window.innerWidth <= 768 ? 35 : 70;
+            gsap.utils.toArray('.timeline-card').forEach((card) => {
+                gsap.to(card, {
+                    y: -distance,
+                    ease: 'none',
+                    scrollTrigger: {
+                        trigger: card,
+                        start: 'top bottom',
+                        end: 'bottom top',
+                        scrub: true,
+                    },
+                });
+            });
+        }
+
     },[])
 
   return (
@@ -65,7 +87,7 @@ const ExperienceSection = () => {
             <div className='mt-32 relative'>
                 <div className='relative z-50 xl:space-y-32 space-y-10'>
                     {expCards.map((card)=>(
-                        <div key={card.tile} className='exp-card-wrapper'>
+                        <div key={card.title} className='exp-card-wrapper'>
                             <div className='xl:w-2/6'>
                                 <GlowCard card={card}>
                                     <div>

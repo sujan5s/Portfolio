@@ -65,9 +65,9 @@ const AppShowcase = () => {
     gsap.fromTo(
       sectionRef.current,
       { opacity: 0, y: 50 },
-      { 
-        opacity: 1, 
-        y: 0, 
+      {
+        opacity: 1,
+        y: 0,
         duration: 1.5,
         scrollTrigger: {
           trigger: sectionRef.current,
@@ -75,6 +75,28 @@ const AppShowcase = () => {
         }
       }
     );
+
+    // Gentle parallax on each project's image, alternating direction so
+    // the cards read at slightly different depths. Independent from
+    // MagicBento's own mouse-driven tilt/magnetism transforms, which live
+    // on the outer card element rather than this inner image wrapper.
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const distance = window.innerWidth <= 768 ? 40 : 80;
+
+    gsap.utils.toArray('.magic-bento-card__image').forEach((img, index) => {
+      gsap.to(img, {
+        y: index % 2 === 0 ? -distance : distance,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: img,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: true,
+        },
+      });
+    });
   }, []);
 
   return (

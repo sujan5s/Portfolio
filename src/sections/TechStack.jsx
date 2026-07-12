@@ -21,8 +21,13 @@ const TechIconsCanvas = lazy(() =>
 
 const TechStack = () => {
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
-  // Pauses the shared canvas entirely while the section is scrolled offscreen
-  const [containerRef, frameloop] = useInViewFrameloop();
+  // Pauses the shared canvas entirely while the section is scrolled offscreen.
+  // A large rootMargin keeps the render loop warm well before/after the
+  // section enters view — drei's <View> needs continuous frames to track
+  // each card's scroll position, so a tight margin caused a visible
+  // jump/desync right at the intersection boundary and made drag rotation
+  // feel stuttery near it.
+  const [containerRef, frameloop] = useInViewFrameloop('800px');
 
   // Animate the tech cards in the skills section
   useGSAP(() => {
