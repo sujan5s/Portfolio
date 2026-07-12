@@ -30,6 +30,9 @@ const vertexShader = /* glsl */ `
 
   varying vec2 vUv;
   varying vec3 vColor;
+  varying float vGlitch;
+
+  float hash(float n) { return fract(sin(n) * 43758.5453123); }
 
   void main() {
     vUv = aUv;
@@ -51,7 +54,13 @@ const vertexShader = /* glsl */ `
     // Subtle per-point shimmer so the cloud feels like a live projection.
     float shimmer = sin(uTime * 2.0 + aUv.y * 40.0) * 0.008;
 
-    vec3 displaced = position + vec3(0.0, 0.0, depth * uDepthScale + shimmer);
+    // Rare horizontal glitch bursts: a handful of rows kick sideways for a
+    // few frames, like an unstable holographic transmission.
+    float row = floor(aUv.y * 48.0);
+    vGlitch = step(0.985, hash(row + floor(uTime * 6.0)));
+    float glitchShift = (hash(row * 3.1 + floor(uTime * 6.0)) - 0.5) * 0.3 * vGlitch;
+
+    vec3 displaced = position + vec3(glitchShift, 0.0, depth * uDepthScale + shimmer);
     vec4 mvPosition = modelViewMatrix * vec4(displaced, 1.0);
     gl_Position = projectionMatrix * mvPosition;
 
@@ -62,36 +71,64 @@ const vertexShader = /* glsl */ `
 
 const fragmentShader = /* glsl */ `
   uniform float uTime;
+  uniform sampler2D uMap;
 
   varying vec2 vUv;
   varying vec3 vColor;
+  varying float vGlitch;
 
-  // Cheap hash for a flicker that has no visible period.
+  // Cheap hash for flicker/grain that has no visible period.
   float hash(float n) { return fract(sin(n) * 43758.5453123); }
+  float hash2(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453123); }
 
   void main() {
-    // Round, soft-edged points for a glowing particle look.
+    // Round, soft-edged points for a glowing particle look. A wider bright
+    // core than falloff keeps the surface reading as filled skin/fabric
+    // rather than sparse dots.
     float d = length(gl_PointCoord - 0.5);
     if (d > 0.5) discard;
-    float soft = smoothstep(0.5, 0.15, d);
+    float soft = smoothstep(0.5, 0.28, d);
 
-    // Keep most of the real photo colour so the face still reads as a
-    // person, with only a light cyan hologram cast on top.
-    vec3 holo = vec3(0.30, 0.90, 1.0);
-    vec3 color = mix(vColor, holo, 0.4);
-    // Lift brightness a little so it doesn't read as too dim.
-    color *= 1.25;
+    // Chromatic aberration: split the colour channels sideways, more so on
+    // glitching rows, for that unstable-projection look.
+    float ca = 0.003 + vGlitch * 0.02;
+    vec3 sample3 = vec3(
+      texture2D(uMap, vUv + vec2(ca, 0.0)).r,
+      vColor.g,
+      texture2D(uMap, vUv - vec2(ca, 0.0)).b
+    );
 
-    // Moving horizontal scanlines sweeping down the projection.
-    float scan = 0.85 + 0.15 * sin(vUv.y * 220.0 - uTime * 6.0);
+    // Mostly the real photo colour so the face and features stay
+    // recognisable, with a light cyan hologram cast on top.
+    vec3 holo = vec3(0.25, 0.95, 1.0);
+    vec3 base = mix(sample3, holo, 0.28);
+    // Brighten and lift shadows so darker skin/fabric tones stay visible
+    // instead of crushing to black once the effects below are applied.
+    base = pow(base * 1.55, vec3(0.8));
 
-    // Global flicker like an unstable holographic feed.
-    float flicker = 0.9 + 0.1 * hash(floor(uTime * 12.0));
+    // Tight scanlines and grain/flicker add signal texture without ever
+    // fully darkening the image.
+    float scan = 0.88 + 0.12 * sin(vUv.y * 320.0 - uTime * 9.0);
+    float grain = 0.94 + 0.06 * hash2(vUv * 400.0 + floor(uTime * 20.0));
+    float flicker = 0.92 + 0.08 * hash(floor(uTime * 14.0));
+    vec3 color = base * scan * grain * flicker;
 
-    color *= scan * flicker;
-    color += holo * 0.15; // faint self-glow
+    // A bright scan-head band sweeps top to bottom on a loop, like a laser
+    // re-tracing the projection.
+    float scanPos = fract(uTime * 0.22);
+    float band = smoothstep(0.05, 0.0, abs(vUv.y - scanPos));
+    color += holo * band * 1.6;
 
-    gl_FragColor = vec4(color, soft);
+    // Glitching rows flash brighter.
+    color += holo * vGlitch * 0.5;
+
+    // Constant baseline glow, applied after the flicker/grain so the
+    // surface never dips below a visible minimum brightness.
+    color += holo * 0.12;
+
+    float alpha = soft * (0.9 + 0.1 * flicker);
+
+    gl_FragColor = vec4(color, alpha);
     #include <colorspace_fragment>
   }
 `;
@@ -153,7 +190,7 @@ const HologramPoints = ({
         uMap: { value: photo },
         uDepth: { value: depth },
         uDepthScale: { value: 0.55 },
-        uSize: { value: isMobile ? 3.5 : 4.5 },
+        uSize: { value: isMobile ? 4.5 : 5.8 },
         uPixelRatio: { value: 1 },
         uTime: { value: 0 },
       },
@@ -244,6 +281,7 @@ const DepthPortrait = () => {
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
   const [reducedMotion, setReducedMotion] = useState(false);
   const [meshReady, setMeshReady] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   // Updated by the wrapper's DOM pointermove (no raycasting) so the mesh knows
   // when the user last interacted — drives the mobile idle-sway timeout.
   const lastPointerRef = useRef(0);
@@ -263,13 +301,16 @@ const DepthPortrait = () => {
       onPointerMove={() => {
         lastPointerRef.current = performance.now();
       }}
+      onPointerEnter={() => setIsHovering(true)}
+      onPointerLeave={() => setIsHovering(false)}
     >
-      {/* Photo shows instantly and fades out once the hologram takes over. */}
+      {/* Photo shows instantly and fades out once the hologram takes over,
+          then crossfades smoothly back in on hover to reveal the real you. */}
       <div
-        className={`absolute inset-0 transition-opacity duration-700 ${
-          meshReady ? "opacity-0" : "opacity-100"
+        className={`absolute inset-0 transition-opacity duration-500 ${
+          !meshReady || isHovering ? "opacity-100" : "opacity-0"
         }`}
-        aria-hidden={meshReady}
+        aria-hidden={meshReady && !isHovering}
       >
         <StaticPortrait />
       </div>

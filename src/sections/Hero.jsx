@@ -64,11 +64,20 @@ const Hero = () => {
         <figure className="relative z-20 flex justify-center items-center xl:w-1/2 w-full mt-20 xl:mt-0 perspective-1000">
           <div className="flex justify-center items-center w-full h-full scale-90 xl:scale-100">
             <div className="relative w-[min(80vw,26rem)] aspect-[2/3]">
+              {/* Outer purple ambient glow (brand colour) */}
               <div
-                className="absolute -inset-8 blur-3xl pointer-events-none"
+                className="absolute -inset-10 blur-3xl pointer-events-none"
                 style={{
                   background:
-                    'radial-gradient(ellipse at center, rgba(0, 180, 255, 0.35), rgba(132, 0, 255, 0.18), transparent 70%)',
+                    'radial-gradient(ellipse at center, rgba(132, 0, 255, 0.45), transparent 65%)',
+                }}
+              />
+              {/* Inner cyan glow tying the halo to the hologram itself */}
+              <div
+                className="absolute -inset-4 blur-2xl pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(ellipse at center, rgba(0, 210, 255, 0.35), transparent 60%)',
                 }}
               />
               <Suspense
